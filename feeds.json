@@ -1,0 +1,34 @@
+{
+  "AI": [
+    "https://feeds.bloomberg.com/markets/news.rss",
+    "https://www.techcrunch.com/feed/"
+  ],
+  "政治": [
+    "https://www.nhk.or.jp/rss/news/politics.xml",
+    "https://www.asahi.com/politics/index.rss20.xml"
+  ],
+  "国際": [
+    "https://www.bbc.com/news/world/rss.xml",
+    "https://feeds.reuters.com/reuters/worldNews"
+  ],
+  "テクノロジー": [
+    "https://feeds.arstechnica.com/arstechnica/index",
+    "https://www.theverge.com/rss/index.xml"
+  ],
+  "教育": [
+    "https://www.asahi.com/edu/index.rss20.xml",
+    "https://mainichi.jp/rss.xml"
+  ],
+  "地域ニュース": [
+    "https://www.nhk.or.jp/rss/news/local.xml",
+    "https://rss.gprime.jp/rss/local/"
+  ],
+  "コミュニティ": [
+    "https://www.town.ota.tokyo.jp/rss/",
+    "https://www.city.tokyo.gov.jp/"
+  ],
+  "若者文化": [
+    "https://www.reddit.com/r/trending/.rss",
+    "https://www.youtube.com/feeds/videos.xml?channel_id=UC4QKCjrKxkpFGnT_HsCIIZQ"
+  ]
+}
