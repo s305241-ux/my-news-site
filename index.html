@@ -234,10 +234,9 @@
             <div class="tabs">
                 <button class="tab-btn active" data-filter="all">すべて</button>
                 <button class="tab-btn" data-filter="政権">日本の政権</button>
-                <button class="tab-btn" data-filter="改革">中道改革連合</button>
+                <button class="tab-btn" data-filter="中道改革連合">中道改革連合</button>
                 <button class="tab-btn" data-filter="公明">公明党</button>
                 <button class="tab-btn" data-filter="首相">首相の動向</button>
-                <button class="tab-btn" data-filter="人材">人材育成</button>
             </div>
             <input type="text" class="search-box" id="searchBox" placeholder="キーワードで検索...">
         </div>
@@ -257,71 +256,18 @@
     <script>
         const keywords = {
             '政権': ['政権', '内閣', '政府', '内閣改造'],
-            '改革': ['中道改革連合', '改革', 'CRU', '改革派'],
+            '中道改革連合': ['中道改革連合', 'CRU'],
             '公明': ['公明党', '公明'],
-            '首相': ['首相', '総理大臣', '岸田', '続投'],
-            '人材': ['人材育成', '人材', '教育', '育成', '人材確保']
+            '首相': ['首相', '総理大臣', '岸田', '続投']
         };
 
-        const sampleNews = [
-            {
-                title: '岸田首相、新しい人材育成戦略を発表',
-                description: '政府は2026年の新しい人材育成戦略を発表しました。グローバルな競争力を持つ人材の養成が重点となります。',
-                source: '官報ニュース',
-                date: '2026-05-07',
-                tags: ['首相', '人材'],
-                url: '#'
-            },
-            {
-                title: '公明党、教育改革案を提示',
-                description: '公明党は新しい教育改革案を発表しました。人材育成と教育の質の向上が主な内容です。',
-                source: '政治ニュース24',
-                date: '2026-05-06',
-                tags: ['公明', '人材'],
-                url: '#'
-            },
-            {
-                title: '中道改革連合、次期選挙戦略を協議',
-                description: '中道改革連合は次期衆議院選挙に向けた戦略を協議しました。政権安定化が主な目標です。',
-                source: 'ポリティクス日本',
-                date: '2026-05-05',
-                tags: ['改革', '政権'],
-                url: '#'
-            },
-            {
-                title: '内閣改造が実施される見通し',
-                description: '首相官邸によると、近く内閣改造が実施される見通しが示されました。現在、政権内の人材配置が検討中です。',
-                source: '日本ニュース速報',
-                date: '2026-05-04',
-                tags: ['政権', '人材'],
-                url: '#'
-            },
-            {
-                title: '公明党と自民党、人材育成で協力',
-                description: '公明党と自民党は人材育成分野での協力を強化することで合意しました。',
-                source: '官報ニュース',
-                date: '2026-05-03',
-                tags: ['公明', '政権', '人材'],
-                url: '#'
-            },
-            {
-                title: '岸田首相、改革推進委員会を設置',
-                description: '政権は新しい改革推進委員会を設置し、中道改革連合と協力して行政改革を進める方針です。',
-                source: 'ポリティクス日本',
-                date: '2026-05-02',
-                tags: ['首相', '改革', '政権'],
-                url: '#'
-            },
-            {
-                title: '若手議員の人材育成プログラム開始',
-                description: '自民党と公明党は若手議員向けの人材育成プログラムを開始しました。政治家としての資質向上が目的です。',
-                source: '政治ニュース24',
-                date: '2026-05-01',
-                date: '2026-05-01',
-                tags: ['人材', '政権'],
-                url: '#'
-            }
+        const newsSources = [
+            { url: 'https://www.nhk.or.jp/rss/news/politics.xml', name: 'NHK ニュース' },
+            { url: 'https://www.asahi.com/politics/index.rss20.xml', name: '朝日新聞' },
+            { url: 'https://news.yahoo.co.jp/rss/topics/politics.xml', name: 'Yahoo! ニュース' }
         ];
+
+        let allNews = [];
 
         let currentFilter = 'all';
         let filteredNews = [];
@@ -334,10 +280,60 @@
             );
         }
 
+        async function fetchNewsFromRSS() {
+            const rss2jsonApi = 'https://api.rss2json.com/v1/api.json';
+            
+            try {
+                const feeds = await Promise.allSettled(
+                    newsSources.map(source =>
+                        fetch(`${rss2jsonApi}?rss_url=${encodeURIComponent(source.url)}`)
+                            .then(res => res.json())
+                            .then(data => ({
+                                items: (data.items || []).map(item => ({
+                                    title: item.title || '',
+                                    description: (item.description || '').replace(/<[^>]*>/g, ''),
+                                    link: item.link || '',
+                                    source: source.name,
+                                    date: new Date(item.pubDate).toISOString().split('T')[0],
+                                    pubDate: new Date(item.pubDate)
+                                })),
+                                source: source.name
+                            }))
+                            .catch(() => ({ items: [], source: source.name }))
+                    )
+                );
+
+                allNews = [];
+                feeds.forEach(result => {
+                    if (result.status === 'fulfilled' && result.value.items.length > 0) {
+                        allNews = allNews.concat(result.value.items);
+                    }
+                });
+
+                // 日付でソート
+                allNews.sort((a, b) => b.pubDate - a.pubDate);
+
+                // 各ニュースにタグを追加
+                allNews = allNews.map(news => ({
+                    ...news,
+                    tags: Object.keys(keywords).filter(key =>
+                        keywords[key].some(keyword =>
+                            (news.title + ' ' + news.description).toLowerCase().includes(keyword.toLowerCase())
+                        )
+                    )
+                }));
+
+                filterNews();
+            } catch (error) {
+                console.error('ニュース取得エラー:', error);
+                document.getElementById('stats').textContent = 'ニュース取得に失敗しました。時間をおいて再度お試しください。';
+            }
+        }
+
         function filterNews() {
             const searchTerm = document.getElementById('searchBox').value.toLowerCase();
             
-            filteredNews = sampleNews.filter(news => {
+            filteredNews = allNews.filter(news => {
                 const matchesFilter = matchesKeywords(
                     news.title + ' ' + news.description + ' ' + news.tags.join(' '),
                     currentFilter
@@ -365,7 +361,7 @@
             newsList.innerHTML = filteredNews.map(news => `
                 <div class="news-item">
                     <div class="news-title">
-                        <a href="${news.url}" target="_blank">${escapeHtml(news.title)}</a>
+                        <a href="${escapeHtml(news.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(news.title)}</a>
                     </div>
                     <div class="news-description">${escapeHtml(news.description)}</div>
                     <div class="tags">
@@ -381,7 +377,7 @@
 
         function updateStats() {
             const stats = document.getElementById('stats');
-            stats.textContent = `表示中: ${filteredNews.length}件の記事 (全${sampleNews.length}件)`;
+            stats.textContent = `表示中: ${filteredNews.length}件の記事 (全${allNews.length}件)`;
         }
 
         function formatDate(dateStr) {
@@ -409,7 +405,7 @@
 
         // 初期化
         document.getElementById('updateDate').textContent = new Date().toLocaleDateString('ja-JP');
-        filterNews();
+        fetchNewsFromRSS();
     </script>
 </body>
 </html>
