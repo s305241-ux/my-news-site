@@ -1,1 +1,415 @@
-news切り抜きサイト
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日本政治ニュース切り抜き</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 0.95rem;
+            opacity: 0.95;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .controls {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .tab-btn {
+            padding: 0.7rem 1.2rem;
+            border: 2px solid #ddd;
+            background: white;
+            color: #333;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            border-color: #667eea;
+            background-color: #f0f0ff;
+        }
+
+        .tab-btn.active {
+            background-color: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .news-list {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .news-item {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 5px solid #667eea;
+        }
+
+        .news-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+
+        .news-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .news-title a {
+            color: #667eea;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .news-title a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
+        .news-description {
+            color: #666;
+            margin-bottom: 0.8rem;
+            line-height: 1.5;
+        }
+
+        .news-meta {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        .news-source {
+            background: #f0f0ff;
+            padding: 0.3rem 0.8rem;
+            border-radius: 3px;
+            font-weight: 500;
+            color: #667eea;
+        }
+
+        .tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.8rem;
+        }
+
+        .tag {
+            background: #e8e8ff;
+            color: #667eea;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #999;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 2rem;
+            color: #999;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .stats {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+            color: #666;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            .tabs {
+                gap: 0.3rem;
+            }
+
+            .tab-btn {
+                padding: 0.6rem 0.9rem;
+                font-size: 0.85rem;
+            }
+
+            .news-item {
+                padding: 1rem;
+            }
+
+            .news-title {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📰 日本政治ニュース切り抜き</h1>
+        <p>関心のあるニュースだけを効率的に収集</p>
+    </header>
+
+    <div class="container">
+        <div class="controls">
+            <div class="tabs">
+                <button class="tab-btn active" data-filter="all">すべて</button>
+                <button class="tab-btn" data-filter="政権">日本の政権</button>
+                <button class="tab-btn" data-filter="改革">中道改革連合</button>
+                <button class="tab-btn" data-filter="公明">公明党</button>
+                <button class="tab-btn" data-filter="首相">首相の動向</button>
+                <button class="tab-btn" data-filter="人材">人材育成</button>
+            </div>
+            <input type="text" class="search-box" id="searchBox" placeholder="キーワードで検索...">
+        </div>
+
+        <div class="stats" id="stats">記事を読み込み中...</div>
+
+        <div class="news-list" id="newsList">
+            <div class="loading">ニュースを読み込み中です...</div>
+        </div>
+    </div>
+
+    <footer>
+        <p>このページは日本の政治関連ニュースの切り抜きページです</p>
+        <p>© 2026 News Aggregator - 更新日: <span id="updateDate"></span></p>
+    </footer>
+
+    <script>
+        const keywords = {
+            '政権': ['政権', '内閣', '政府', '内閣改造'],
+            '改革': ['中道改革連合', '改革', 'CRU', '改革派'],
+            '公明': ['公明党', '公明'],
+            '首相': ['首相', '総理大臣', '岸田', '続投'],
+            '人材': ['人材育成', '人材', '教育', '育成', '人材確保']
+        };
+
+        const sampleNews = [
+            {
+                title: '岸田首相、新しい人材育成戦略を発表',
+                description: '政府は2026年の新しい人材育成戦略を発表しました。グローバルな競争力を持つ人材の養成が重点となります。',
+                source: '官報ニュース',
+                date: '2026-05-07',
+                tags: ['首相', '人材'],
+                url: '#'
+            },
+            {
+                title: '公明党、教育改革案を提示',
+                description: '公明党は新しい教育改革案を発表しました。人材育成と教育の質の向上が主な内容です。',
+                source: '政治ニュース24',
+                date: '2026-05-06',
+                tags: ['公明', '人材'],
+                url: '#'
+            },
+            {
+                title: '中道改革連合、次期選挙戦略を協議',
+                description: '中道改革連合は次期衆議院選挙に向けた戦略を協議しました。政権安定化が主な目標です。',
+                source: 'ポリティクス日本',
+                date: '2026-05-05',
+                tags: ['改革', '政権'],
+                url: '#'
+            },
+            {
+                title: '内閣改造が実施される見通し',
+                description: '首相官邸によると、近く内閣改造が実施される見通しが示されました。現在、政権内の人材配置が検討中です。',
+                source: '日本ニュース速報',
+                date: '2026-05-04',
+                tags: ['政権', '人材'],
+                url: '#'
+            },
+            {
+                title: '公明党と自民党、人材育成で協力',
+                description: '公明党と自民党は人材育成分野での協力を強化することで合意しました。',
+                source: '官報ニュース',
+                date: '2026-05-03',
+                tags: ['公明', '政権', '人材'],
+                url: '#'
+            },
+            {
+                title: '岸田首相、改革推進委員会を設置',
+                description: '政権は新しい改革推進委員会を設置し、中道改革連合と協力して行政改革を進める方針です。',
+                source: 'ポリティクス日本',
+                date: '2026-05-02',
+                tags: ['首相', '改革', '政権'],
+                url: '#'
+            },
+            {
+                title: '若手議員の人材育成プログラム開始',
+                description: '自民党と公明党は若手議員向けの人材育成プログラムを開始しました。政治家としての資質向上が目的です。',
+                source: '政治ニュース24',
+                date: '2026-05-01',
+                date: '2026-05-01',
+                tags: ['人材', '政権'],
+                url: '#'
+            }
+        ];
+
+        let currentFilter = 'all';
+        let filteredNews = [];
+
+        function matchesKeywords(text, filterType) {
+            if (filterType === 'all') return true;
+            const keywordList = keywords[filterType];
+            return keywordList.some(keyword => 
+                text.toLowerCase().includes(keyword.toLowerCase())
+            );
+        }
+
+        function filterNews() {
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            
+            filteredNews = sampleNews.filter(news => {
+                const matchesFilter = matchesKeywords(
+                    news.title + ' ' + news.description + ' ' + news.tags.join(' '),
+                    currentFilter
+                );
+                const matchesSearch = searchTerm === '' || 
+                    news.title.toLowerCase().includes(searchTerm) ||
+                    news.description.toLowerCase().includes(searchTerm) ||
+                    news.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+                
+                return matchesFilter && matchesSearch;
+            });
+
+            renderNews();
+            updateStats();
+        }
+
+        function renderNews() {
+            const newsList = document.getElementById('newsList');
+            
+            if (filteredNews.length === 0) {
+                newsList.innerHTML = '<div class="no-results">該当するニュースはありません</div>';
+                return;
+            }
+
+            newsList.innerHTML = filteredNews.map(news => `
+                <div class="news-item">
+                    <div class="news-title">
+                        <a href="${news.url}" target="_blank">${escapeHtml(news.title)}</a>
+                    </div>
+                    <div class="news-description">${escapeHtml(news.description)}</div>
+                    <div class="tags">
+                        ${news.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+                    </div>
+                    <div class="news-meta">
+                        <span class="news-source">${escapeHtml(news.source)}</span>
+                        <span>${formatDate(news.date)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateStats() {
+            const stats = document.getElementById('stats');
+            stats.textContent = `表示中: ${filteredNews.length}件の記事 (全${sampleNews.length}件)`;
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('ja-JP');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // イベントリスナー設定
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                filterNews();
+            });
+        });
+
+        document.getElementById('searchBox').addEventListener('input', filterNews);
+
+        // 初期化
+        document.getElementById('updateDate').textContent = new Date().toLocaleDateString('ja-JP');
+        filterNews();
+    </script>
+</body>
+</html>
