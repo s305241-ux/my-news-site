@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 AIニュースダッシュボード</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        // ダークモード切り替え
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const isDark = html.getAttribute('data-theme') === 'dark';
+            html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        }
+        
+        // ページロード時に保存されたテーマを適用
+        function loadTheme() {
+            const theme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+        }
+        
+        // カテゴリフィルタ
+        function filterCategory(category) {
+            const articles = document.querySelectorAll('.article');
+            articles.forEach(article => {
+                if (category === 'all' || article.dataset.category === category) {
+                    article.style.display = 'grid';
+                } else {
+                    article.style.display = 'none';
+                }
+            });
+            
+            // アクティブボタンを更新
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+        
+        // 検索機能
+        function searchArticles() {
+            const query = document.getElementById('search-box').value.toLowerCase();
+            const articles = document.querySelectorAll('.article');
+            
+            articles.forEach(article => {
+                const title = article.querySelector('.article-title').textContent.toLowerCase();
+                const summary = article.querySelector('.summary').textContent.toLowerCase();
+                
+                if (title.includes(query) || summary.includes(query)) {
+                    article.style.display = 'grid';
+                } else {
+                    article.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</head>
+<body onload="loadTheme()">
+    <header>
+        <div class="header-container">
+            <div class="header-title">
+                <h1>🤖 AIニュースダッシュボード</h1>
+                <p>あなた専用のスマートニュース要約</p>
+            </div>
+            <button class="theme-toggle" onclick="toggleDarkMode()">🌙</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- 統計情報 -->
+        <section class="stats">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_articles }}</div>
+                <div class="stat-label">収集ニュース</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ categories|length }}</div>
+                <div class="stat-label">カテゴリ</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">✨</div>
+                <div class="stat-label">AI要約済み</div>
+            </div>
+        </section>
+
+        <!-- 検索とフィルタ -->
+        <section class="controls">
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="search-box" 
+                    class="search-box" 
+                    placeholder="🔍 キーワードで検索..."
+                    onkeyup="searchArticles()"
+                >
+            </div>
+
+            <div class="category-filter">
+                <button class="category-btn active" onclick="filterCategory('all')">
+                    すべて
+                </button>
+                {% for category in categories %}
+                <button class="category-btn" onclick="filterCategory('{{ category }}')">
+                    {{ category }}
+                </button>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- ニュース一覧 -->
+        <section class="news-container">
+            {% for category, articles in news_by_category.items() %}
+                <div class="category-section">
+                    <h2 class="category-title">📁 {{ category }}</h2>
+                    <div class="articles-grid">
+                        {% for article in articles %}
+                            <article class="article" data-category="{{ article.category }}">
+                                <div class="article-header">
+                                    <span class="category-badge">{{ article.category }}</span>
+                                    <span class="star-rating">
+                                        {% for i in range(1, article.star_rating + 1) %}
+                                            ⭐
+                                        {% endfor %}
+                                    </span>
+                                </div>
+
+                                <h3 class="article-title">
+                                    <a href="{{ article.link }}" target="_blank" rel="noopener noreferrer">
+                                        {{ article.title }}
+                                    </a>
+                                </h3>
+
+                                <p class="summary">{{ article.summary }}</p>
+
+                                <div class="article-content">
+                                    <div class="importance">
+                                        <strong>📌 なぜ重要？</strong>
+                                        <p>{{ article.importance }}</p>
+                                    </div>
+
+                                    <div class="impact">
+                                        <strong>🔮 今後の影響</strong>
+                                        <p>{{ article.impact }}</p>
+                                    </div>
+                                </div>
+
+                                {% if article.comment %}
+                                    <p class="comment">💬 {{ article.comment }}</p>
+                                {% endif %}
+
+                                <div class="article-footer">
+                                    <span class="source">📰 {{article.source }}</span>
+                                    <span class="published">
+                                        {% if article.published %}
+                                            {{ article.published[:10] }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+
+                                <a href="{{ article.link }}" class="read-more" target="_blank" rel="noopener noreferrer">
+                                    🔗 記事を読む
+                                </a>
+                            </article>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </section>
+
+        <!-- 更新情報 -->
+        <footer class="footer">
+            <p>最終更新: {{ last_updated }}</p>
+            <p>このダッシュボードはOpenAI APIを使用してニュースを要約しています</p>
+        </footer>
+    </main>
+</body>
+</html>
